@@ -157,15 +157,15 @@ if !errorlevel! == 1 (
         set "archive=jdk-22_windows-x64_bin.exe"
         set "directory=%USERPROFILE%"
 
-        for /r "%archive%" %%a in ("%directory%") do (
+        for /r "!archive!" %%a in ("!directory!") do (
             start "" "%%a"
             goto HOME
         )
 
         if "!lang!" == "en" (
-            echo [Tect-Starter] Error: File not found (#c7djs) - (%directory%) - (%archive%)
+            echo [Tect-Starter] Error: File not found [#c7djs] [!directory!] [!archive!]
         ) else if "!lang!" == "es" (
-            echo [Tect-Starter] Error: Archivo no encontrado (#c7djs) - (%directory%) - (%archive%)
+            echo [Tect-Starter] Error: Archivo no encontrado [#c7djs] [!directory!] [!archive!]
         )
     ) else if !errorlevel! == 2 (
         start "" "https://download.oracle.com/java/21/latest/jdk-21_windows-x64_bin.exe"
@@ -180,15 +180,15 @@ if !errorlevel! == 1 (
         set "archive=jdk-21_windows-x64_bin.exe"
         set "directory=%USERPROFILE%"
 
-        for /r "%archive%" %%a in ("%directory%") do (
+        for /r "!archive!" %%a in ("!directory!") do (
             start "" "%%a"
             goto HOME
         )
 
         if "!lang!" == "en" (
-            echo [Tect-Starter] Error: File not found (#g8md1) - (%directory%) - (%archive%)
+            echo [Tect-Starter] Error: File not found [#g8md1] [!directory!] [!archive!]
         ) else if "!lang!" == "es" (
-            echo [Tect-Starter] Error: Archivo no encontrado (#g8md1) - (%directory%) - (%archive%)
+            echo [Tect-Starter] Error: Archivo no encontrado [#g8md1] [!directory!] [!archive!]
         )
     ) else if !errorlevel! == 3 (
         start "" "https://download.oracle.com/java/17/latest/jdk-17_windows-x64_bin.exe"
@@ -203,15 +203,15 @@ if !errorlevel! == 1 (
         set "archive=jdk-22_windows-x64_bin.exe"
         set "directory=%USERPROFILE%"
 
-        for /r "%archive%" %%a in ("%directory%") do (
+        for /r "!archive!" %%a in ("!directory!") do (
             start "" "%%a"
             goto HOME
         )
 
         if "!lang!" == "en" (
-            echo [Tect-Starter] Error: File not found (#7bd5x) - (%directory%) - (%archive%)
+            echo [Tect-Starter] Error: File not found [#7bd5x] [!directory!] [!archive!]
         ) else if "!lang!" == "es" (
-            echo [Tect-Starter] Error: Archivo no encontrado (#7bd5x) - (%directory%) - (%archive%)
+            echo [Tect-Starter] Error: Archivo no encontrado [#7bd5x] [!directory!] [!archive!]
         )
     )
 
@@ -226,6 +226,49 @@ if !errorlevel! == 1 (
 rem ------------------------ { START SERVER } ------------------------
 :STARTSERVER
 cls
+
+if not exist eula.txt (
+    echo #By changing the setting below to TRUE you are indicating your agreement to our EULA [https://aka.ms/MinecraftEULA] > eula.txt
+    echo #%DATE% >> eula.txt
+    echo eula=false >> eula.txt
+) 
+
+if exist eula.txt (
+    set "eula="
+    set lineaCont=0
+    for /f "usebackq delims=" %%a in ("eula.txt") do (
+        set /a "lineaCont+=1"
+        if !lineaCont! equ 3 (
+            set "eula=%%a"
+            if defined eula (
+                set "eula=!eula:~5!"
+                set "eula=!eula:~0,-1!"
+            )
+        )
+    )
+)
+
+if "!eula!" equ "false" (
+    if "!lang!" == "en" (
+        echo Do you accept the eula? [y/n] [https://aka.ms/MinecraftEULA]
+    ) else if "!lang!" == "es" (
+        echo ¿Aceptas el eula? [y/n] [https://aka.ms/MinecraftEULA]
+    )
+
+    choice /c yn /N
+
+    if "!errorlevel!" == "1" (
+        echo #By changing the setting below to TRUE you are indicating your agreement to our EULA [https://aka.ms/MinecraftEULA] > eula.txt
+        echo #%DATE% >> eula.txt
+        echo|set /p="eula=true" >> eula.txt
+
+        goto START1
+    ) else if "!errorlevel!" == "2" (
+        goto HOME
+    )
+)
+
+:START1
 if "!lang!" == "en" (
     echo Starting Minecraft server with Java version %javav%...
 ) else if "!lang!" == "es" (

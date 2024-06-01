@@ -191,6 +191,36 @@ function Inicio {
 
 function StartServer {
     Clear-Host
+
+    if (-not (Test-Path eula.txt)) {
+        Write-Output "#By changing the setting below to TRUE you are indicating your agreement to our EULA (https://aka.ms/MinecraftEULA)." > eula.txt
+        Write-Output "#$(Get-Date)" >> eula.txt
+        Write-Output "eula=false" >> eula.txt
+    }
+
+    if (Test-Path eula.txt) {
+        $global:eula = Get-Content "eula.txt" | Select-Object -Index 2
+        $global:eula = $global:eula.Substring(5)
+    }
+
+    if ($global:eula -eq "false") {
+        if ($global:lang -eq "en") {
+            Write-Host "Do you accept the eula? [y/n] (https://aka.ms/MinecraftEULA)"
+        } elseif ($global:lang -eq "es") {
+            Write-Host "Aceptas el eula? [y/n] (https://aka.ms/MinecraftEULA)"
+        }
+
+        $option = choice /c yn /N
+
+        if ($option -eq "y") {
+            Write-Output "#By changing the setting below to TRUE you are indicating your agreement to our EULA (https://aka.ms/MinecraftEULA)." | Out-File -FilePath "eula.txt" -Encoding utf8
+            Write-Output "#$(Get-Date)" | Out-File -FilePath "eula.txt" -Append -Encoding utf8
+            Write-Output "eula=true" | Out-File -FilePath "eula.txt" -Append -Encoding utf8
+        } elseif ($option -eq "n") {
+            Inicio
+        }
+    }
+
     if ($global:lang -eq "en") {
         Write-Host "Starting Minecraft server with Java version $global:javav..."
     } elseif ($global:lang -eq "es") {
