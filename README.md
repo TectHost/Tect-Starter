@@ -31,6 +31,18 @@ Tested Java versions:
 Tested PowerShell versions:
 - 5.1.19041.4412
 
+### Shell (Linux)
+Requeriments:
+- Some version of Java (you can install Java directly from the script)
+- Sudo access
+
+Tested OS:
+- Lubuntu 24.04 LTS
+
+Tested Java versions:
+- JDK 21
+- JDK 17
+
 # Configurable options
 - Language (en/es) [default: en]
 - Java version (you can install Java, only Java 17, 21 and 22) [default: (The first version available)]
