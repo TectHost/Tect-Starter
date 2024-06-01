@@ -17,6 +17,20 @@ Tested Java versions:
 - JDK 21
 - JDK 17
 
+### PowerShell (Windows)
+Requeriments:
+- Some version of Java (you can install Java directly from the script)
+- PowerShell 5.1 (or above)
+
+Tested OS:
+- Windows 10 Pro
+
+Tested Java versions:
+- JDK 21
+
+Tested PowerShell versions:
+- 5.1.19041.4412
+
 # Configurable options
 - Language (en/es) [default: en]
 - Java version (you can install Java, only Java 17, 21 and 22) [default: (The first version available)]
