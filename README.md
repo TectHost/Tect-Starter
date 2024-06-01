@@ -4,11 +4,18 @@
 Tect Starter is a script to start Minecraft servers, which allows you to easily configure the server RAM, Java version, Aikar Flags...
 
 # Compatibility
-### Languages:
-- Batch (Windows)
+## Languages:
+### Batch (Windows)
+Requeriments:
+- Some version of Java (you can install Java directly from the script)
 
-### Requeriments:
-- Batch: Some version of Java (you can install Java directly from the script)
+Tested OS:
+- Windows 10 Pro
+
+Tested Java versions:
+- JDK 22
+- JDK 21
+- JDK 17
 
 # Configurable options
 - Language (en/es) [default: en]
@@ -17,6 +24,8 @@ Tect Starter is a script to start Minecraft servers, which allows you to easily 
 - Server JAR [default: server.jar]
 - Server Memory [default: 2048]
 - Aikar Flags (true/false) [default: true]
+
+[Help](https://github.com/TectHost/Tect-Starter/wiki/Options)
 
 # Support
 [Issues](https://github.com/TectHost/Tect-Starter/issues)
