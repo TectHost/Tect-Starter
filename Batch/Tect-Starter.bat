@@ -4,6 +4,9 @@
 chcp 65001 > nul
 setlocal enabledelayedexpansion
 
+rem Script version
+set "version=1.0.3"
+
 rem Set title
 title Tect Starter - Windows
 
@@ -50,6 +53,65 @@ for /f "usebackq delims=" %%a in ("options.txt") do (
     )
 )
 
+rem Auto Update
+set "vurl=https://raw.githubusercontent.com/TectHost/Tect-Starter/main/version.txt"
+
+rem Check if curl is available
+where curl >nul 2>nul
+if errorlevel 1 (
+    if "%lang%" == "en" (
+        echo [Tect-Starter] Error: curl is not installed or cannot be found on the system. [#7cdbs]
+    ) else if "%lang%" == "es" (
+        echo [Tect-Starter] Error: curl no está instalado o no se puede encontrar en el sistema. [#7cdbs]
+    )
+    exit /b 1
+)
+
+rem Extract content using curl
+set "content="
+for /f "usebackq delims=" %%a in (`curl -s "%vurl%"`) do (
+    set "content=!content!%%a"
+)
+
+rem Compare current version with downloaded content
+if "%version%" neq "%content%" (
+    if "%lang%" == "en" (
+        echo An update is available
+        echo Do you want to download it? [y/n]
+    ) else if "%lang%" == "es" (
+        echo Hay una actualización disponible
+        echo ¿Quieres descargarla? [y/n]
+    )
+
+    choice /c yn /N
+
+    if errorlevel 1 (
+        set "url=https://raw.githubusercontent.com/TectHost/Tect-Starter/main/Batch/Tect-Starter.bat"
+        set "dest=%~dp0Tect-Starter.bat"
+
+        rem Descargar el archivo usando PowerShell
+        powershell -Command "Invoke-WebRequest -Uri \"!url!\" -OutFile \"!dest!\""
+
+        rem Verificar si la descarga fue exitosa
+        if exist "!dest!" (
+            if "%lang%" == "en" (
+                echo The file has been downloaded successfully.
+            ) else if "%lang%" == "es" (
+                echo El archivo se ha descargado correctamente.
+            )
+        ) else (
+            if "%lang%" == "en" (
+                echo [Tect-Starter] Error: Error downloading file. [#c78na]
+            ) else if "%lang%" == "es" (
+                echo [Tect-Starter] Error: Error al descargar el archivo. [#c78na]
+            )
+        )
+
+        pause
+        exit
+    )
+)
+
 set "home1="
 set "home2="
 set "home3="
@@ -73,7 +135,7 @@ rem ------------------------ { HOME } ------------------------
 cls
 echo ████████ ███████  ██████ ████████     ███████ ████████  █████  ██████  ████████ ███████ ██████  
 echo    ██    ██      ██         ██        ██         ██    ██   ██ ██   ██    ██    ██      ██   ██ 
-echo    ██    █████   ██         ██        ███████    ██    ███████ ██████     ██    █████   ██████  v1.0.0
+echo    ██    █████   ██         ██        ███████    ██    ███████ ██████     ██    █████   ██████  v!version!
 echo    ██    ██      ██         ██             ██    ██    ██   ██ ██   ██    ██    ██      ██   ██ 
 echo    ██    ███████  ██████    ██        ███████    ██    ██   ██ ██   ██    ██    ███████ ██   ██ 
 echo.

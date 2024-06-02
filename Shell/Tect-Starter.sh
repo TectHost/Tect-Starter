@@ -3,6 +3,8 @@
 # Set UTF-8 encoding
 export LANG=en_US.UTF-8
 
+version="1.0.13"
+
 # Function to create options file if it doesn't exist
 create_options_file() {
     if [ ! -f options.txt ]; then
@@ -46,6 +48,59 @@ create_options_file
 # Read options file
 read_options_file
 
+# Auto update
+vurl="https://raw.githubusercontent.com/TectHost/Tect-Starter/main/version.txt"
+
+# Check if curl is available
+if ! command -v curl &> /dev/null; then
+    if [ "$lang" == "en" ]; then
+        echo "[Tect-Starter] Error: curl is not installed or cannot be found on the system. [#7cdbs]"
+    elif [ "$lang" == "es" ]; then
+        echo "[Tect-Starter] Error: curl no está instalado o no se puede encontrar en el sistema. [#7cdbs]"
+    fi
+    exit 1
+fi
+
+# Extract content using curl
+content=$(curl -s "$vurl")
+
+# Compare current version with downloaded content
+if [ "$version" != "$content" ]; then
+    clear
+    if [ "$lang" == "en" ]; then
+        echo "An update is available"
+        echo "Do you want to download it? [y/n]"
+    elif [ "$lang" == "es" ]; then
+        echo "Hay una actualización disponible"
+        echo "¿Quieres descargarla? [y/n]"
+    fi
+
+    read -r -p "" choice
+
+    if [ "$choice" == "y" ]; then
+        url="https://raw.githubusercontent.com/TectHost/Tect-Starter/main/Shell/Tect-Starter.sh"
+        dest="$(dirname "$0")/Tect-Starter.sh"
+
+        # Descargar el archivo usando wget
+        wget -q -O "$dest" "$url"
+
+        # Verificar si la descarga fue exitosa
+        if [ -f "$dest" ]; then
+            if [ "$lang" == "en" ]; then
+                echo "The file has been downloaded successfully."
+            elif [ "$lang" == "es" ]; then
+                echo "El archivo se ha descargado correctamente."
+            fi
+        else
+            if [ "$lang" == "en" ]; then
+                echo "[Tect-Starter] Error: Error downloading file. [#c78na]"
+            elif [ "$lang" == "es" ]; then
+                echo "[Tect-Starter] Error: Error al descargar el archivo. [#c78na]"
+            fi
+        fi
+    fi
+fi
+
 home=0
 
 # Function to display home menu
@@ -53,7 +108,7 @@ display_home_menu() {
     clear
     echo "████████ ███████  ██████ ████████     ███████ ████████  █████  ██████  ████████ ███████ ██████  "
     echo "   ██    ██      ██         ██        ██         ██    ██   ██ ██   ██    ██    ██      ██   ██ "
-    echo "   ██    █████   ██         ██        ███████    ██    ███████ ██████     ██    █████   ██████  v1.0.0"
+    echo "   ██    █████   ██         ██        ███████    ██    ███████ ██████     ██    █████   ██████  v$version"
     echo "   ██    ██      ██         ██             ██    ██    ██   ██ ██   ██    ██    ██      ██   ██ "
     echo "   ██    ███████  ██████    ██        ███████    ██    ██   ██ ██   ██    ██    ███████ ██   ██ "
     echo

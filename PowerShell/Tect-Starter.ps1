@@ -2,6 +2,8 @@
 # All rights reserved
 Clear-Host
 
+$global:version = "1.0.3"
+
 # Create options.txt file if not exist
 if (-not (Test-Path options.txt)) {
     # Lang
@@ -24,18 +26,74 @@ if (-not (Test-Path options.txt)) {
     Write-Output true >> options.txt
 }
 
+# Load variables
+$global:lang = Get-Content "options.txt" | Select-Object -Index 0
+$global:javav = Get-Content "options.txt" | Select-Object -Index 1
+$global:gui = Get-Content "options.txt" | Select-Object -Index 2
+$global:jar = Get-Content "options.txt" | Select-Object -Index 3
+$global:mem = Get-Content "options.txt" | Select-Object -Index 4
+$global:aikar = Get-Content "options.txt" | Select-Object -Index 5
+
+# Definir la URL del archivo de versión
+$vurl = "https://raw.githubusercontent.com/TectHost/Tect-Starter/main/version.txt"
+
+# Comprobar si Invoke-WebRequest está disponible
+if (-not (Get-Command Invoke-WebRequest -ErrorAction SilentlyContinue)) {
+    if ($global:lang -eq "es") {
+        Write-Output "[Tect-Starter] Error: Invoke-WebRequest no está disponible o no se puede encontrar en el sistema. [#7cdbs]"
+    } else {
+        Write-Output "[Tect-Starter] Error: Invoke-WebRequest is not available or cannot be found on the system. [#7cdbs]"
+    }
+    exit 1
+}
+
+# Extraer el contenido usando Invoke-WebRequest
+$content = Invoke-WebRequest -Uri $vurl
+
+# Comparar la versión actual con el contenido descargado
+if ($global:version -ne $content) {
+    if ($global:lang -eq "es") {
+        Write-Output "Hay una actualización disponible"
+        Write-Output "¿Quieres descargarla? [y/n]"
+    } else {
+        Write-Output "An update is available"
+        Write-Output "Do you want to download it? [y/n]"
+    }
+
+    $choice = choice /c yn /N
+    
+    if ($choice -eq "y") {
+        $url = "https://raw.githubusercontent.com/TectHost/Tect-Starter/main/PowerShell/Tect-Starter.ps1"
+        $dest = "$PSScriptRoot\Tect-Starter.ps1"
+
+        # Descargar el archivo usando Invoke-WebRequest
+        Invoke-WebRequest -Uri $url -OutFile $dest
+
+        # Verificar si la descarga fue exitosa
+        if (Test-Path $dest) {
+            if ($global:lang -eq "es") {
+                Write-Output "El archivo se ha descargado correctamente."
+            } else {
+                Write-Output "The file has been downloaded successfully."
+            }
+        } else {
+            if ($global:lang -eq "es") {
+                Write-Output "[Tect-Starter] Error: Error al descargar el archivo. [#c78na]"
+            } else {
+                Write-Output "[Tect-Starter] Error: Error downloading file. [#c78na]"
+            }
+        }
+        Read-Host -Prompt "Press Enter to continue..."
+        exit
+    }
+}
+
 $global:home0 = 0
 
 function Inicio {
     Clear-Host
-    # Load variables
-    $global:lang = Get-Content "options.txt" | Select-Object -Index 0
-    $global:javav = Get-Content "options.txt" | Select-Object -Index 1
-    $global:gui = Get-Content "options.txt" | Select-Object -Index 2
-    $global:jar = Get-Content "options.txt" | Select-Object -Index 3
-    $global:mem = Get-Content "options.txt" | Select-Object -Index 4
-    $global:aikar = Get-Content "options.txt" | Select-Object -Index 5
-    Write-Host "v1.0.0"
+
+    Write-Host "$global:version"
     Write-Host
     if ($global:lang -eq "en") {
         Write-Host "Select an option:"
