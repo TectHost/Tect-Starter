@@ -8,6 +8,7 @@ Tect Starter is a script to start Minecraft servers, which allows you to easily 
 ### Batch (Windows)
 Requeriments:
 - Some version of Java (you can install Java directly from the script)
+- [curl](https://curl.se/)
 
 Tested OS:
 - Windows 10 Pro
@@ -21,6 +22,7 @@ Tested Java versions:
 Requeriments:
 - Some version of Java (you can install Java directly from the script)
 - PowerShell 5.1 (or above)
+- [curl](https://curl.se/)
 
 Tested OS:
 - Windows 10 Pro
@@ -35,6 +37,7 @@ Tested PowerShell versions:
 Requeriments:
 - Some version of Java (you can install Java directly from the script)
 - Sudo access
+- [curl](https://curl.se/)
 
 Tested OS:
 - Lubuntu 24.04 LTS
