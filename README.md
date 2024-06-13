@@ -53,6 +53,7 @@ Tested Java versions:
 - Server JAR [default: server.jar]
 - Server Memory [default: 2048]
 - Aikar Flags (true/false) [default: true]
+- CPU (unlimited/(number of cores)) [default: unlimited]
 
 [Help](https://github.com/TectHost/Tect-Starter/wiki/Options)
 
