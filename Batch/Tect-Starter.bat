@@ -5,7 +5,7 @@ chcp 65001 > nul
 setlocal enabledelayedexpansion
 
 rem Script version
-set "version=1.0.3"
+set "version=1.0.4"
 
 rem Set title
 title Tect Starter - Windows
@@ -27,6 +27,8 @@ if not exist options.txt (
     echo 2048 >> options.txt
     rem Aikar flags
     echo true >> options.txt
+    rem CPU cores
+    echo unlimited >> options.txt
 )
 
 rem Get file contents
@@ -50,6 +52,9 @@ for /f "usebackq delims=" %%a in ("options.txt") do (
     ) else if !lineaCont! equ 6 (
         set "aikar=%%a"
         if defined aikar set "aikar=!aikar:~0,-1!"
+    ) else if !lineaCont! equ 7 (
+        set "cpu=%%a"
+        if defined cpu set "cpu=!cpu:~0,-1!"
     )
 )
 
@@ -89,10 +94,10 @@ if "%version%" neq "%content%" (
         set "url=https://raw.githubusercontent.com/TectHost/Tect-Starter/main/Batch/Tect-Starter.bat"
         set "dest=%~dp0Tect-Starter.bat"
 
-        rem Descargar el archivo usando PowerShell
+        rem Download the file using PowerShell
         powershell -Command "Invoke-WebRequest -Uri \"!url!\" -OutFile \"!dest!\""
 
-        rem Verificar si la descarga fue exitosa
+        rem Check if the download was successful
         if exist "!dest!" (
             if "%lang%" == "en" (
                 echo The file has been downloaded successfully.
@@ -118,6 +123,7 @@ set "home3="
 set "home4="
 set "home5="
 set "home6="
+set "home7="
 
 set "home=0"
 
@@ -147,6 +153,9 @@ if "!lang!" == "en" (
     echo 4. Install Java            %home4%
     echo 5. Support                 %home5%
     echo 6. Exit                    %home6%
+    if !home! == 1 (
+        echo .                          %home7%
+    )
 ) else if "!lang!" == "es" (
     echo Selecciona una opción:
     echo 1. Iniciar servidor        %home1%
@@ -155,6 +164,9 @@ if "!lang!" == "en" (
     echo 4. Instalar Java           %home4%
     echo 5. Soporte                 %home5%
     echo 6. Salida                  %home6%
+    if !home! == 1 (
+        echo .                          %home7%
+    )
 )
 
 choice /c 123456 /N
@@ -172,6 +184,7 @@ if !errorlevel! == 1 (
         set "home4="
         set "home5="
         set "home6="
+        set "home7="
         goto HOME
     ) else if !home! == 0 (
         set "home=1"
@@ -182,6 +195,7 @@ if !errorlevel! == 1 (
             set "home4=Server JAR file: %jar%"
             set "home5=Server memory: %mem% MB"
             set "home6=Aikar Flags: %aikar%"
+            set "home7=CPU: !cpu! cores"
         ) else if "!lang!" == "es" (
             set "home1=Idioma: %lang%"
             set "home2=Versión de Java: %javav%"
@@ -189,6 +203,7 @@ if !errorlevel! == 1 (
             set "home4=Archivo server JAR: %jar%"
             set "home5=Memoria del servidor: %mem% MB"
             set "home6=Aikar Flags: %aikar%"
+            set "home7=CPU: !cpu! núcleos"
         )
         
         goto HOME
@@ -289,6 +304,12 @@ rem ------------------------ { START SERVER } ------------------------
 :STARTSERVER
 cls
 
+rem CPU number to CPU hex code, ex: 0x3
+if "!cpu!" NEQ "unlimited" (
+    set /a "affinityValue=(1 << cpu) - 1"
+    set "cpu_affinity=0x!affinityValue!"
+)
+
 if not exist eula.txt (
     echo #By changing the setting below to TRUE you are indicating your agreement to our EULA [https://aka.ms/MinecraftEULA] > eula.txt
     echo #%DATE% >> eula.txt
@@ -347,6 +368,7 @@ if defined javavexist (
             echo Server JAR: !jar!
             echo Server Memory: !mem! MB
             echo Aikar Flags: !aikar!
+            echo CPU: !cpu!
         ) else if "!lang!" == "es" (
             echo Iniciando servidor...
             echo Opciones:
@@ -355,13 +377,22 @@ if defined javavexist (
             echo Archivo JAR: !jar!
             echo Memoria del servidor: !mem! MB
             echo Aikar Flags: !aikar!
+            echo CPU: !cpu!
         )
         
         echo.
         if "!aikar!" == "true" (
-            "%ProgramFiles%\Java\%javav%\bin\java" -Xms%mem%M -Xmx%mem%M --add-modules=jdk.incubator.vector -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -jar !jar! --nogui
+            if defined cpu_affinity (
+                start "Java Server" /affinity %cpu_affinity% "%ProgramFiles%\Java\%javav%\bin\java" -Xms%mem%M -Xmx%mem%M --add-modules=jdk.incubator.vector -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -jar !jar! --nogui
+            ) else (
+                "%ProgramFiles%\Java\%javav%\bin\java" -Xms%mem%M -Xmx%mem%M --add-modules=jdk.incubator.vector -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -jar !jar! --nogui
+            )
         ) else (
-            "%ProgramFiles%\Java\%javav%\bin\java" -Xmx%mem%M -Xms%mem%M -jar !jar! --nogui
+            if defined cpu_affinity (
+                start "Java Server" /affinity %cpu_affinity% "%ProgramFiles%\Java\%javav%\bin\java" -Xmx%mem%M -Xms%mem%M -jar !jar! --nogui
+            ) else (
+                "%ProgramFiles%\Java\%javav%\bin\java" -Xmx%mem%M -Xms%mem%M -jar !jar! --nogui
+            )
         )
     ) else (
         if "!lang!" == "en" (
@@ -372,6 +403,7 @@ if defined javavexist (
             echo Server JAR: !jar!
             echo Server Memory: !mem! MB
             echo Aikar Flags: !aikar!
+            echo CPU: !cpu!
         ) else if "!lang!" == "es" (
             echo Iniciando servidor...
             echo Opciones:
@@ -380,13 +412,22 @@ if defined javavexist (
             echo Archivo JAR: !jar!
             echo Memoria del servidor: !mem! MB
             echo Aikar Flags: !aikar!
+            echo CPU: !cpu!
         )
 
         echo.
         if "!aikar!" == "true" (
-            "%ProgramFiles%\Java\%javav%\bin\java" -Xms%mem%M -Xmx%mem%M --add-modules=jdk.incubator.vector -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -jar !jar!
+            if defined cpu_affinity (
+                start "Java Server" /affinity %cpu_affinity% "%ProgramFiles%\Java\%javav%\bin\java" -Xms%mem%M -Xmx%mem%M --add-modules=jdk.incubator.vector -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -jar !jar! --nogui
+            ) else (
+                "%ProgramFiles%\Java\%javav%\bin\java" -Xms%mem%M -Xmx%mem%M --add-modules=jdk.incubator.vector -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -jar !jar! --nogui
+            )
         ) else (
-            "%ProgramFiles%\Java\%javav%\bin\java" -Xmx%mem%M -Xms%mem%M -jar !jar!
+            if defined cpu_affinity (
+                start "Java Server" /affinity %cpu_affinity% "%ProgramFiles%\Java\%javav%\bin\java" -Xmx%mem%M -Xms%mem%M -jar !jar! --nogui
+            ) else (
+                "%ProgramFiles%\Java\%javav%\bin\java" -Xmx%mem%M -Xms%mem%M -jar !jar! --nogui
+            )
         )
     )
     pause
@@ -413,6 +454,7 @@ if "!lang!" equ "en" (
     echo 4. Server JAR [!jar!]
     echo 5. Server memory [!mem! MB]
     echo 6. Aikar Flags [!aikar!]
+    echo 7. CPU cores [!cpu! cores]
     echo.
     echo 0. Back
 ) else if "!lang!" equ "es" (
@@ -423,11 +465,12 @@ if "!lang!" equ "en" (
     echo 4. Archivo JAR [!jar!]
     echo 5. Memoria del servidor [!mem! MB]
     echo 6. Aikar Flags [!aikar!]
+    echo 7. Núcleos de CPU [!cpu! núcleos]
     echo.
     echo 0. Atrás
 )
 
-choice /c 0123456 /N
+choice /c 01234567 /N
 
 cls
 
@@ -537,6 +580,22 @@ if !errorlevel! equ 1 (
     )
 
     goto OPTIONSFINAL
+) else if !errorlevel! == 8 (
+    if "!lang!" == "en" (
+        echo Options:
+        echo - *
+        echo - unlimited [recommended]
+
+        set /p "cpu=Select a valid number of cores: "
+    ) else if "!lang!" == "es" (
+        echo Opciones:
+        echo - *
+        echo - unlimited [recomendado]
+
+        set /p "cpu=Selecciona una cantidad de núcleos válida: "
+    )
+
+    goto OPTIONSFINAL
 )
 
 :OPTIONSFINAL
@@ -546,6 +605,7 @@ echo !gui! >> options.txt
 echo !jar! >> options.txt
 echo !mem! >> options.txt
 echo !aikar! >> options.txt
+echo !cpu! >> options.txt
 
 goto OPTIONS
 

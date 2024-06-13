@@ -2,7 +2,7 @@
 # All rights reserved
 Clear-Host
 
-$global:version = "1.0.3"
+$global:version = "1.0.4"
 
 # Create options.txt file if not exist
 if (-not (Test-Path options.txt)) {
@@ -24,6 +24,8 @@ if (-not (Test-Path options.txt)) {
     Write-Output 2048 >> options.txt
     # Aikar flags
     Write-Output true >> options.txt
+    # CPU cores
+    Write-Output unlimited >> options.txt
 }
 
 # Load variables
@@ -33,6 +35,7 @@ $global:gui = Get-Content "options.txt" | Select-Object -Index 2
 $global:jar = Get-Content "options.txt" | Select-Object -Index 3
 $global:mem = Get-Content "options.txt" | Select-Object -Index 4
 $global:aikar = Get-Content "options.txt" | Select-Object -Index 5
+$global:cpu = Get-Content "options.txt" | Select-Object -Index 6
 
 # Definir la URL del archivo de versión
 $vurl = "https://raw.githubusercontent.com/TectHost/Tect-Starter/main/version.txt"
@@ -103,6 +106,9 @@ function Inicio {
         Write-Host "4. Install Java            $home4"
         Write-Host "5. Support                 $home5"
         Write-Host "6. Exit                    $home6"
+        if ($global:home0 -eq 1) {
+            Write-Host "                           $home7"
+        }
     } elseif ($global:lang -eq "es") {
         Write-Host "Selecciona una opcion:"
         Write-Host "1. Iniciar servidor        $home1"
@@ -111,6 +117,9 @@ function Inicio {
         Write-Host "4. Instalar Java           $home4"
         Write-Host "5. Soporte                 $home5"
         Write-Host "6. Salida                  $home6"
+        if ($global:home0 -eq 1) {
+            Write-Host "                           $home7"
+        }
     }
 
     $option = choice /c 123456 /N
@@ -128,6 +137,7 @@ function Inicio {
             $home4 = ""
             $home5 = ""
             $home6 = ""
+            $home7 = ""
             Inicio
         } elseif ($global:home0 -eq 0) {
             $global:home0++
@@ -138,6 +148,7 @@ function Inicio {
                 $home4 = "Server JAR file: $global:jar"
                 $home5 = "Server Memory: $global:mem MB"
                 $home6 = "Aikar Flags: $global:aikar"
+                $home7 = "CPU: $global:cpu cores"
                 Inicio
             } elseif ($global:lang -eq "es") {
                 $home1 = "Idioma: $global:lang"
@@ -146,6 +157,7 @@ function Inicio {
                 $home4 = "Archivo server JAR: $global:jar"
                 $home5 = "Memoria del servidor: $global:mem MB"
                 $home6 = "Aikar Flags: $global:aikar"
+                $home7 = "CPU: $global:cpu nucleos"
                 Inicio
             }
         }
@@ -250,6 +262,12 @@ function Inicio {
 function StartServer {
     Clear-Host
 
+    # CPU number to CPU hex code, ex: 0x3
+    if ($global:cpu -ne "unlimited") {
+        $affinityValue = [math]::pow(2, $global:cpu) - 1
+        $global:cpu_affinity = "0x{0:X}" -f $affinityValue.ToString()
+    }
+
     if (-not (Test-Path eula.txt)) {
         Write-Output "#By changing the setting below to TRUE you are indicating your agreement to our EULA (https://aka.ms/MinecraftEULA)." > eula.txt
         Write-Output "#$(Get-Date)" >> eula.txt
@@ -295,6 +313,7 @@ function StartServer {
                 Write-Host "Server JAR: $global:jar"
                 Write-Host "Server Memory: $global:mem MB"
                 Write-Host "Aikar Flags: $global:aikar"
+                Write-Host "CPU: $global:cpu cores"
             } elseif ($global:lang -eq "es") {
                 Write-Host "Iniciando servidor..."
                 Write-Host "Opciones:"
@@ -303,6 +322,7 @@ function StartServer {
                 Write-Host "Archivo JAR: $global:jar"
                 Write-Host "Memoria del servidor: $global:mem MB"
                 Write-Host "Aikar Flags: $global:aikar"
+                Write-Host "CPU: $global:cpu nucleos"
             }
 
             Write-Host
@@ -310,10 +330,18 @@ function StartServer {
                 $javapath = "$env:ProgramFiles\Java\$global:javav\bin\java"
                 $arguments = "-Xms${global:mem}M -Xmx${global:mem}M --add-modules=jdk.incubator.vector -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -jar $global:jar --nogui"
 
+                if ($global:cpu -ne "unlimited") {
+                    $arguments += " -affinity $global:cpu_affinity"
+                }
+
                 Start-Process -FilePath $javapath -ArgumentList $arguments
             } else {
                 $javaPath = "$env:ProgramFiles\Java\$global:javav\bin\java"
                 $arguments = "-Xmx${global:mem}M -Xms${global:mem}M -jar $global:jar --nogui"
+
+                if ($global:cpu -ne "unlimited") {
+                    $arguments += " -affinity $global:cpu_affinity"
+                }
 
                 Start-Process -FilePath $javaPath -ArgumentList $arguments
             }
@@ -326,6 +354,7 @@ function StartServer {
                 Write-Host "Server JAR: $global:jar"
                 Write-Host "Server Memory: $global:mem MB"
                 Write-Host "Aikar Flags: $global:aikar"
+                Write-Host "CPU: $global:cpu cores"
             } elseif ($global:lang -eq "es") {
                 Write-Host "Iniciando servidor..."
                 Write-Host "Opciones:"
@@ -334,6 +363,7 @@ function StartServer {
                 Write-Host "Archivo JAR: $global:jar"
                 Write-Host "Memoria del servidor: $global:mem MB"
                 Write-Host "Aikar Flags: $global:aikar"
+                Write-Host "CPU: $global:cpu nucleos"
             }
 
             Write-Host
@@ -341,10 +371,18 @@ function StartServer {
                 $javapath = "$env:ProgramFiles\Java\$global:javav\bin\java"
                 $arguments = "-Xms${global:mem}M -Xmx${global:mem}M --add-modules=jdk.incubator.vector -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -jar $global:jar"
 
+                if ($global:cpu -ne "unlimited") {
+                    $arguments += " -affinity $global:cpu_affinity"
+                }
+
                 Start-Process -FilePath $javapath -ArgumentList $arguments
             } else {
                 $javaPath = "$env:ProgramFiles\Java\$global:javav\bin\java"
                 $arguments = "-Xmx${global:mem}M -Xms${global:mem}M -jar $global:jar"
+
+                if ($global:cpu -ne "unlimited") {
+                    $arguments += " -affinity $global:cpu_affinity"
+                }
 
                 Start-Process -FilePath $javaPath -ArgumentList $arguments
             }
@@ -375,6 +413,7 @@ function Options {
         Write-Host "4. Server JAR [$global:jar]"
         Write-Host "5. Server memory [$global:mem MB]"
         Write-Host "6. Aikar Flags [$global:aikar]"
+        Write-Host "7. CPU [$global:cpu cores]"
         Write-Host
         Write-Host "0. Back"
     } elseif ($global:lang -eq "es") {
@@ -385,11 +424,12 @@ function Options {
         Write-Host "4. Archivo JAR [$global:jar]"
         Write-Host "5. Memoria del servidor [$global:mem MB]"
         Write-Host "6. Aikar Flags [$global:aikar]"
+        Write-Host "7. CPU [$global:cpu nucleos]"
         Write-Host
         Write-Host "0. Atras"
     }
 
-    $option = choice /c 0123456 /N
+    $option = choice /c 01234567 /N
 
     Clear-Host
 
@@ -487,6 +527,20 @@ function Options {
 
             $global:aikar = Read-Host "Selecciona una opcion valida"
         }
+    } elseif ($option -eq 7) {
+        if ($global:lang -eq "en") {
+            Write-Host "Options:"
+            Write-Host "- *"
+            Write-Host "- unlimited [recommended]"
+
+            $global:cpu = Read-Host "Select a valid number of cores"
+        } elseif ($global:lang -eq "es") {
+            Write-Host "Opciones:"
+            Write-Host "- *"
+            Write-Host "- unlimited [recomendado]"
+
+            $global:cpu = Read-Host "Ingresa una cantidad de nucleos valida"
+        }
     }
 
     Write-Output $global:lang > options.txt
@@ -495,6 +549,7 @@ function Options {
     Write-Output $global:jar >> options.txt
     Write-Output $global:mem >> options.txt
     Write-Output $global:aikar >> options.txt
+    Write-Output $global:cpu >> options.txt
     Options
 }
 

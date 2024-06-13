@@ -3,7 +3,7 @@
 # Set UTF-8 encoding
 export LANG=en_US.UTF-8
 
-version="1.0.13"
+version="1.0.4"
 
 # Function to create options file if it doesn't exist
 create_options_file() {
@@ -23,6 +23,7 @@ create_options_file() {
         echo "server.jar" >> options.txt
         echo "2048" >> options.txt
         echo "true" >> options.txt
+        echo "2" >> options.txt
     fi
 }
 
@@ -38,6 +39,7 @@ read_options_file() {
             4) jar=${line} ;;
             5) mem=${line} ;;
             6) aikar=${line} ;;
+            7) cpu=${line}
         esac
     done < options.txt
 }
@@ -142,6 +144,7 @@ display_options_menu() {
         echo "4. Server JAR [${jar}]"
         echo "5. Server memory [${mem} MB]"
         echo "6. Aikar Flags [${aikar}]"
+        echo "7. CPU [${cpu} cores]"
         echo
         echo "0. Back"
     elif [ "$lang" = "es" ]; then
@@ -152,6 +155,7 @@ display_options_menu() {
         echo "4. Archivo JAR [${jar}]"
         echo "5. Memoria del servidor [${mem} MB]"
         echo "6. Aikar Flags [${aikar}]"
+        echo "7. CPU [${cpu} núcleos]"
         echo
         echo "0. Atrás"
     fi
@@ -246,6 +250,19 @@ change_option() {
                 read -p "Selecciona una opción válida: " aikar
             fi
             ;;
+        7)
+            if [ "$lang" = "en" ]; then
+                echo "Options:"
+                echo "- *"
+                echo "- unlimited [recommended]"
+                read -p "Select an available option: " cpu
+            elif [ "$lang" = "es" ]; then
+                echo "Opciones:"
+                echo "- *"
+                echo "- unlimited [recomendado]"
+                read -p "Selecciona una opción válida: " cpu
+            fi
+            ;;
     esac
 
     # Save options to file
@@ -255,11 +272,18 @@ change_option() {
     echo "$jar" >> options.txt
     echo "$mem" >> options.txt
     echo "$aikar" >> options.txt
+    echo "$cpu" >> options.txt
 }
 
 # Function to start the server
 start_server() {
     clear
+
+    if [ "$cpu" != "unlimited" ]; then
+        affinityValue=$(( (1 << cpu) - 1 ))
+        cpu_affinity=$(printf "0x%x" "$affinityValue")
+    fi
+
     if [ ! -f eula.txt ]; then
         echo "#By changing the setting below to TRUE you are indicating your agreement to our EULA [https://aka.ms/MinecraftEULA]" > eula.txt
         echo "#$(date)" >> eula.txt
@@ -294,18 +318,32 @@ start_server() {
     fi
     
     command="java -Xms${mem}M -Xmx${mem}M"
-    
+
     if [ "$aikar" = "true" ]; then
         command="${command} -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true"
     fi
-    
+
     command="${command} -jar ${jar}"
-    
+
     if [ "$gui" = "false" ]; then
         command="${command} nogui"
     fi
-    
-    eval $command
+
+    if [ -n "$cpu_affinity" ]; then
+        if [ "$lang" = "en" ]; then
+            echo "Starting Java Server with CPU affinity $cpu_affinity ($cpu cores)"
+        elif [ "$lang" = "es" ]; then
+            echo "Iniciando servidor de Java con CPU affinity $cpu_affinity ($cpu núcleos)"
+        fi
+        eval "taskset $cpu_affinity $command"
+    else
+        if [ "$lang" = "en" ]; then
+            echo "Starting Java Server without CPU affinity"
+        elif [ "$lang" = "es" ]; then
+            echo "Iniciando servidor de Java sin CPU affinity"
+        fi
+        eval "$command"
+    fi
 }
 
 # Java versions installer
